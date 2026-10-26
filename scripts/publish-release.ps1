@@ -63,6 +63,34 @@ try {
         throw "Failed to rename published executable to: $executablePath"
     }
 
+    $watchdogProjectPath = Join-Path $repoRoot "TaskbarLyrics.Watchdog\TaskbarLyrics.Watchdog.csproj"
+    $watchdogExecutableName = "TaskbarLyrics.Watchdog.exe"
+    $watchdogStaging = Join-Path $stagingRoot "watchdog"
+    New-Item -ItemType Directory -Path $watchdogStaging -Force | Out-Null
+
+    Write-Host "Publishing TaskbarLyrics watchdog..." -ForegroundColor Cyan
+    & dotnet publish $watchdogProjectPath `
+        -c Release `
+        -r win-x64 `
+        --self-contained true `
+        -p:PublishSingleFile=true `
+        -p:EnableCompressionInSingleFile=true `
+        -p:DebugType=None `
+        -p:DebugSymbols=false `
+        -p:Version=$Version `
+        -o $watchdogStaging
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Watchdog dotnet publish failed with exit code $LASTEXITCODE."
+    }
+
+    $watchdogExecutablePath = Join-Path $watchdogStaging $watchdogExecutableName
+    if (-not (Test-Path $watchdogExecutablePath)) {
+        throw "Published watchdog executable was not found: $watchdogExecutablePath"
+    }
+
+    Copy-Item -LiteralPath $watchdogExecutablePath -Destination (Join-Path $stagingPackage $watchdogExecutableName)
+
     Write-Host "Creating ZIP archive..." -ForegroundColor Cyan
     Compress-Archive -Path $stagingPackage -DestinationPath $stagingArchive -CompressionLevel Optimal
 

@@ -38,7 +38,7 @@ describe("QQ Music lifecycle setting", () => {
     expect(checkbox).not.toBeNull();
     expect(checkbox.checked).toBe(false);
     expect(checkbox.parentElement.querySelector(".switch-track")).not.toBeNull();
-    expect(checkbox.getAttribute("aria-label")).toBe("关闭 QQ 音乐后退出");
+    expect(checkbox.getAttribute("aria-label")).toBe("随 QQ 音乐运行");
 
     dom.window.close();
   });

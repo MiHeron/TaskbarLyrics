@@ -2,6 +2,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TaskbarLyrics.Core\TaskbarLyrics.Core.csproj" />
+    <ProjectReference Include="..\TaskbarLyrics.Watchdog\TaskbarLyrics.Watchdog.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <Private>false</Private>
+    </ProjectReference>
   </ItemGroup>
 
   <PropertyGroup>
@@ -44,5 +48,15 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
+  <Target Name="CopyWatchdogExecutable" AfterTargets="Build">
+    <ItemGroup>
+      <WatchdogExecutable Include="$(MSBuildThisFileDirectory)..\TaskbarLyrics.Watchdog\bin\$(Configuration)\net8.0-windows\TaskbarLyrics.Watchdog.exe" />
+    </ItemGroup>
+    <Copy SourceFiles="@(WatchdogExecutable)"
+          DestinationFolder="$(OutDir)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('%(WatchdogExecutable.FullPath)')" />
+  </Target>
 
 </Project>

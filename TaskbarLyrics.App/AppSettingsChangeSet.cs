@@ -9,6 +9,7 @@ internal readonly record struct AppSettingsChangeSet(
     bool TranslationDisplayChanged,
     bool SearchStatusDisplayChanged,
     bool AutoHideWhenNoPlaybackChanged,
+    bool StartupBehaviorChanged,
     bool SpectrumDisplayChanged,
     bool VisualStyleChanged,
     bool LyricsLayoutChanged,
@@ -70,6 +71,10 @@ internal readonly record struct AppSettingsChangeSet(
 
         var autoHideWhenNoPlaybackChanged = isInitialApplication ||
             current.AutoHideWhenNoPlayback != next.AutoHideWhenNoPlayback;
+
+        var startupBehaviorChanged = isInitialApplication ||
+            current.RunWithQQMusic != next.RunWithQQMusic ||
+            current.StartWithWindows != next.StartWithWindows;
 
         var spectrumDisplayChanged = isInitialApplication ||
             current.SpectrumDisplayMode != next.SpectrumDisplayMode ||
@@ -140,6 +145,7 @@ internal readonly record struct AppSettingsChangeSet(
             translationDisplayChanged,
             searchStatusDisplayChanged,
             autoHideWhenNoPlaybackChanged,
+            startupBehaviorChanged,
             spectrumDisplayChanged,
             visualStyleChanged,
             lyricsLayoutChanged,

@@ -65,8 +65,7 @@ public partial class App : System.Windows.Application, IDisposable
         NativeWindowTheme.SetMode(Settings.ToolWindowTheme);
         _spectrumTuningSettings = Settings.SpectrumTuning.Clone();
         ApplyStartupForegroundColor(Settings);
-        Settings.StartWithWindows = Settings.StartWithWindows || StartupService.IsEnabled();
-        StartupService.SetEnabled(Settings.StartWithWindows);
+        ApplyStartupRegistration();
         var startupDisplays = DisplayMonitorService.GetDisplays();
         var startupTargets = LyricsDisplayTargetSelector.Select(
             startupDisplays,
@@ -124,6 +123,12 @@ public partial class App : System.Windows.Application, IDisposable
         if (Settings.RunWithQQMusic)
         {
             EnsureQqMusicLifecycleMonitor();
+            if (!WatchdogStartupService.IsWatchdogPresent())
+            {
+                _trayService.ShowNotification(
+                    "TaskbarLyrics",
+                    "未找到 TaskbarLyrics.Watchdog.exe，随 QQ 音乐自动启动不可用。");
+            }
         }
 
         StartActivationServer();
@@ -193,31 +198,48 @@ public partial class App : System.Windows.Application, IDisposable
 
         nextSettings.SpectrumTuning = Settings.SpectrumTuning.Clone();
         nextSettings.GlobalMediaHotkeys ??= new GlobalMediaHotkeySettings();
+        if (nextSettings.RunWithQQMusic)
+        {
+            nextSettings.StartWithWindows = false;
+        }
+
         var changes = AppSettingsChangeSet.Create(currentSettings, nextSettings);
         NativeWindowTheme.SetMode(nextSettings.ToolWindowTheme);
         Settings = nextSettings;
         _taskbarScaleConstraints = GetTaskbarScaleConstraints(nextSettings);
         var saved = _settingsStore?.Save(Settings) ?? false;
-        if (currentSettings.RunWithQQMusic != nextSettings.RunWithQQMusic)
-        {
-            if (nextSettings.RunWithQQMusic)
-            {
-                EnsureQqMusicLifecycleMonitor();
-            }
-            else
-            {
-                StopQqMusicLifecycleMonitor();
-            }
-        }
-
         if (changes.RequiresLyricsWindowApply)
         {
             _lyricsWindowHost?.ApplySettings(Settings);
+        }
+
+        if (changes.RequiresLyricsWindowApply || changes.StartupBehaviorChanged)
+        {
             if (_settingsWindow is not null)
             {
                 TaskObserver.Observe(
                     _settingsWindow.ApplyExternalSettingsAsync(Settings.Clone()),
                     "settings window state update");
+            }
+        }
+
+        if (changes.StartupBehaviorChanged)
+        {
+            ApplyStartupRegistration();
+            if (Settings.RunWithQQMusic)
+            {
+                EnsureQqMusicLifecycleMonitor();
+                if (currentSettings.RunWithQQMusic != nextSettings.RunWithQQMusic &&
+                    !WatchdogStartupService.IsWatchdogPresent())
+                {
+                    _trayService?.ShowNotification(
+                        "TaskbarLyrics",
+                        "未找到 TaskbarLyrics.Watchdog.exe，随 QQ 音乐自动启动不可用。");
+                }
+            }
+            else
+            {
+                StopQqMusicLifecycleMonitor();
             }
         }
 
@@ -227,6 +249,28 @@ public partial class App : System.Windows.Application, IDisposable
         }
 
         return saved;
+    }
+
+    private void ApplyStartupRegistration()
+    {
+        if (Settings.RunWithQQMusic)
+        {
+            if (Settings.StartWithWindows)
+            {
+                Settings.StartWithWindows = false;
+                _settingsStore?.Save(Settings);
+            }
+
+            StartupService.SetEnabled(false);
+            WatchdogStartupService.SetEnabled(true);
+            WatchdogStartupService.Start();
+            return;
+        }
+
+        WatchdogStartupService.SetEnabled(false);
+        WatchdogStartupService.StopRunning();
+        Settings.StartWithWindows = Settings.StartWithWindows || StartupService.IsEnabled();
+        StartupService.SetEnabled(Settings.StartWithWindows);
     }
 
     private void EnsureQqMusicLifecycleMonitor()

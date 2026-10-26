@@ -1587,7 +1587,7 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
                 break;
             case "startWithWindows":
                 _settings.StartWithWindows = ReadBool(element, _settings.StartWithWindows);
-                StartupService.SetEnabled(_settings.StartWithWindows);
+                StartupService.SetEnabled(_settings.StartWithWindows && !_settings.RunWithQQMusic);
                 break;
             case "runWithQQMusic":
                 _settings.RunWithQQMusic = ReadBool(element, _settings.RunWithQQMusic);
