@@ -279,4 +279,42 @@ public sealed class AppSettingsChangeSetTests
         Assert.False(changes.LyricSyncServiceChanged);
     }
 
+    [Fact]
+    public void RunWithQQMusicChangeOnlyRequestsSettingsStateRefresh()
+    {
+        var current = new AppSettings();
+        var next = current.Clone();
+        next.RunWithQQMusic = true;
+
+        var changes = AppSettingsChangeSet.Create(current, next);
+
+        Assert.True(changes.StartupBehaviorChanged);
+        Assert.False(changes.RequiresLyricsWindowApply);
+    }
+
+    [Fact]
+    public void StartWithWindowsChangeOnlyRequestsSettingsStateRefresh()
+    {
+        var current = new AppSettings();
+        var next = current.Clone();
+        next.StartWithWindows = true;
+
+        var changes = AppSettingsChangeSet.Create(current, next);
+
+        Assert.True(changes.StartupBehaviorChanged);
+        Assert.False(changes.RequiresLyricsWindowApply);
+    }
+
+    [Fact]
+    public void UnrelatedSettingDoesNotChangeStartupBehavior()
+    {
+        var current = new AppSettings();
+        var next = current.Clone();
+        next.ShowLyricTranslation = true;
+
+        var changes = AppSettingsChangeSet.Create(current, next);
+
+        Assert.False(changes.StartupBehaviorChanged);
+    }
+
 }
