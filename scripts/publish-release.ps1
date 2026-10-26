@@ -68,20 +68,51 @@ try {
     $watchdogStaging = Join-Path $stagingRoot "watchdog"
     New-Item -ItemType Directory -Path $watchdogStaging -Force | Out-Null
 
-    Write-Host "Publishing TaskbarLyrics watchdog..." -ForegroundColor Cyan
-    & dotnet publish $watchdogProjectPath `
-        -c Release `
-        -r win-x64 `
-        --self-contained true `
-        -p:PublishSingleFile=true `
-        -p:EnableCompressionInSingleFile=true `
-        -p:DebugType=None `
-        -p:DebugSymbols=false `
-        -p:Version=$Version `
-        -o $watchdogStaging
+    Write-Host "Publishing TaskbarLyrics watchdog (NativeAOT)..." -ForegroundColor Cyan
+    $vswherePath = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
+    $vsInstallPath = $null
+    if (Test-Path -LiteralPath $vswherePath) {
+        $vsInstallPath = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+    }
 
-    if ($LASTEXITCODE -ne 0) {
-        throw "Watchdog dotnet publish failed with exit code $LASTEXITCODE."
+    $vcvarsPath = if ($vsInstallPath) { Join-Path $vsInstallPath "VC\Auxiliary\Build\vcvarsall.bat" } else { $null }
+    if ($vcvarsPath -and (Test-Path -LiteralPath $vcvarsPath)) {
+        # ILCompiler 8.0.x 的 findvcvarsall.bat 在 VS 2026 下会误报 vswhere，
+        # 这里先进入 vcvars 环境并让 AOT 直接使用环境里的 link.exe/LIB。
+        $publishArguments = @(
+            "publish",
+            "`"$watchdogProjectPath`"",
+            "-c", "Release",
+            "-r", "win-x64",
+            "-p:PublishAot=true",
+            "-p:IlcUseEnvironmentalTools=true",
+            "-p:DebugType=None",
+            "-p:DebugSymbols=false",
+            "-p:Version=$Version",
+            "-o", "`"$watchdogStaging`""
+        ) -join " "
+        & cmd.exe /d /c "call `"$vcvarsPath`" amd64 >nul 2>&1 && dotnet $publishArguments"
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Watchdog NativeAOT publish failed with exit code $LASTEXITCODE."
+        }
+    }
+    else {
+        Write-Warning "MSVC C++ Build Tools not found. Falling back to the trimmed single-file watchdog."
+        & dotnet publish $watchdogProjectPath `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            -p:Version=$Version `
+            -o $watchdogStaging
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Watchdog dotnet publish failed with exit code $LASTEXITCODE."
+        }
     }
 
     $watchdogExecutablePath = Join-Path $watchdogStaging $watchdogExecutableName

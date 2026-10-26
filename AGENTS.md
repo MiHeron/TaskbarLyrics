@@ -10,6 +10,7 @@ Read this file before changing the repository. Keep user-visible behavior and st
 ## Build and verification
 
 - Requires .NET 8 SDK, Windows x64, and Windows 11 SDK 10.0.22621. Run with `dotnet run --project TaskbarLyrics.App`; build with `dotnet build TaskbarLyrics.sln`.
+- Release packaging publishes the watchdog with NativeAOT, which additionally requires the Visual Studio C++ Build Tools ("Desktop development with C++") and Windows SDK. Normal `dotnet build` does not require MSVC; the publish script falls back to the trimmed single-file watchdog when MSVC is unavailable.
 - Choose verification by impact. Use `scripts/verify.ps1 -Tier Targeted -Area <Core|App|Web|Settings> -Filter <filter>` while iterating (`Settings` needs no filter), or `-Tier Project -Area <areas>` for affected areas. Run its default `Full` tier for release work, broad cross-module changes, and compatibility-sensitive changes. Run a zero-warning solution build for production C# integration or release work.
 - Add or update tests when observable behavior or a compatibility contract changes. Cover settings page behavior in Vitest and settings persistence or message parsing in App tests. Full verification also checks that development artifacts stay out of production Web assets.
 - Before handoff, run `git diff --check` and report which checks passed, failed, or were not run. Keep full verification output in ignored `tmp/verify-logs/` and show only a concise result or actionable failure excerpt.
