@@ -77,11 +77,14 @@ dotnet run --project TaskbarLyrics.App
 
 已经下载源码时，在项目根目录执行最后两条命令即可。启动后，打开受支持的播放器播放音乐。
 
+> 日常开发只需要 .NET 8 SDK。如果要打发布包，看门狗使用 NativeAOT，需要额外安装 Visual Studio Build Tools 的“使用 C++ 的桌面开发”工作负载和 Windows SDK；最终用户下载的发布包不需要这些工具。
+
 ### 系统要求
 
 - Windows 10 / 11 x64。
 - 独立版压缩包无需额外安装 .NET 8 Runtime。
 - 主版本使用 Microsoft Edge WebView2 Runtime；如果设置页或歌词窗口为空白，请安装该运行时。
+- 从源码打发布包需要 Visual Studio C++ Build Tools；直接使用发布包不需要。
 
 ### 调整到你喜欢的样子
 

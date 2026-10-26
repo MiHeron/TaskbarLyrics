@@ -10,7 +10,14 @@
     <ApplicationIcon>..\TaskbarLyrics.App\Assets\AppIcon\TaskbarLyrics.ico</ApplicationIcon>
     <Version>1.7.5</Version>
     <InvariantGlobalization>true</InvariantGlobalization>
-    <PublishTrimmed>true</PublishTrimmed>
+    <PublishTrimmed Condition="'$(PublishAot)' != 'true'">true</PublishTrimmed>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(PublishAot)' == 'true'">
+    <OptimizationPreference>Size</OptimizationPreference>
+    <StripSymbols>true</StripSymbols>
+    <EventSourceSupport>false</EventSourceSupport>
+    <StackTraceSupport>false</StackTraceSupport>
   </PropertyGroup>
 
 </Project>
