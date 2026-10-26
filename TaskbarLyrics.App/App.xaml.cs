@@ -20,6 +20,7 @@ public partial class App : System.Windows.Application, IDisposable
     private SettingsWindow? _settingsWindow;
     private SpectrumTuningWindow? _spectrumTuningWindow;
     private LyricsWindowHost? _lyricsWindowHost;
+    private QqMusicLifecycleMonitor? _qqMusicLifecycleMonitor;
     private TrackLyricOffsetStore? _trackLyricOffsetStore;
     private GlobalMediaHotkeyService? _mediaHotkeyService;
     private AppCompositionRoot? _compositionRoot;
@@ -120,6 +121,11 @@ public partial class App : System.Windows.Application, IDisposable
             ExitApplication,
             SetDisplayMode,
             () => Settings.UseFloatingWindow);
+        if (Settings.RunWithQQMusic)
+        {
+            EnsureQqMusicLifecycleMonitor();
+        }
+
         StartActivationServer();
         SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
@@ -147,6 +153,9 @@ public partial class App : System.Windows.Application, IDisposable
         }
 
         LogShutdownStage("Dispose.Begin");
+        _qqMusicLifecycleMonitor?.Dispose();
+        _qqMusicLifecycleMonitor = null;
+        LogShutdownStage("Dispose.QQMusicLifecycle.End");
         _activationServerCancellation?.Cancel();
         _activationServerCancellation?.Dispose();
         SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
@@ -189,6 +198,18 @@ public partial class App : System.Windows.Application, IDisposable
         Settings = nextSettings;
         _taskbarScaleConstraints = GetTaskbarScaleConstraints(nextSettings);
         var saved = _settingsStore?.Save(Settings) ?? false;
+        if (currentSettings.RunWithQQMusic != nextSettings.RunWithQQMusic)
+        {
+            if (nextSettings.RunWithQQMusic)
+            {
+                EnsureQqMusicLifecycleMonitor();
+            }
+            else
+            {
+                StopQqMusicLifecycleMonitor();
+            }
+        }
+
         if (changes.RequiresLyricsWindowApply)
         {
             _lyricsWindowHost?.ApplySettings(Settings);
@@ -206,6 +227,17 @@ public partial class App : System.Windows.Application, IDisposable
         }
 
         return saved;
+    }
+
+    private void EnsureQqMusicLifecycleMonitor()
+    {
+        _qqMusicLifecycleMonitor ??= new QqMusicLifecycleMonitor(Dispatcher, ExitApplication);
+    }
+
+    private void StopQqMusicLifecycleMonitor()
+    {
+        _qqMusicLifecycleMonitor?.Dispose();
+        _qqMusicLifecycleMonitor = null;
     }
 
     private void SaveFloatingSize(FloatingWindowSize size)
@@ -688,7 +720,7 @@ public partial class App : System.Windows.Application, IDisposable
         _lyricsWindowHost?.RetrySpectrumCapture();
     }
 
-    private void ExitApplication()
+    internal void ExitApplication()
     {
         TaskObserver.Observe(ExitApplicationAsync(), "application shutdown");
     }

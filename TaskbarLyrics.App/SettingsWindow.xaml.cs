@@ -1292,6 +1292,7 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
             ShowLyricsOnStartup = _settings.ShowLyricsOnStartup,
             AutoHideWhenNoPlayback = _settings.AutoHideWhenNoPlayback,
             StartWithWindows = _settings.StartWithWindows,
+            RunWithQQMusic = _settings.RunWithQQMusic,
             AutoCheckUpdates = _settings.AutoCheckUpdates,
             ShowLyricTranslation = _settings.ShowLyricTranslation,
             ShowLyricSearchStatus = _settings.ShowLyricSearchStatus,
@@ -1587,6 +1588,9 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
             case "startWithWindows":
                 _settings.StartWithWindows = ReadBool(element, _settings.StartWithWindows);
                 StartupService.SetEnabled(_settings.StartWithWindows);
+                break;
+            case "runWithQQMusic":
+                _settings.RunWithQQMusic = ReadBool(element, _settings.RunWithQQMusic);
                 break;
             case "autoCheckUpdates":
                 _settings.AutoCheckUpdates = ReadBool(element, _settings.AutoCheckUpdates);
@@ -2220,6 +2224,7 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
         target.ShowLyricsOnStartup = source.ShowLyricsOnStartup;
         target.AutoHideWhenNoPlayback = source.AutoHideWhenNoPlayback;
         target.StartWithWindows = source.StartWithWindows;
+        target.RunWithQQMusic = source.RunWithQQMusic;
         target.AutoCheckUpdates = source.AutoCheckUpdates;
         target.LastUpdateCheckUtc = source.LastUpdateCheckUtc;
         target.LastNotifiedUpdateVersion = source.LastNotifiedUpdateVersion;
@@ -2380,6 +2385,7 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
         public bool ShowLyricsOnStartup { get; set; }
         public bool AutoHideWhenNoPlayback { get; set; }
         public bool StartWithWindows { get; set; }
+        public bool RunWithQQMusic { get; set; }
         public bool AutoCheckUpdates { get; set; }
         public bool ShowLyricTranslation { get; set; }
         public bool ShowLyricSearchStatus { get; set; }

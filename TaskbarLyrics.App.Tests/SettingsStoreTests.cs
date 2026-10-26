@@ -23,6 +23,24 @@ public sealed class SettingsStoreTests
     }
 
     [Theory]
+    [InlineData("{}", false)]
+    [InlineData("{\"RunWithQQMusic\":true}", true)]
+    [InlineData("{\"RunWithQQMusic\":false}", false)]
+    public void RunWithQQMusicDefaultsOffAndRoundTrips(string json, bool expected)
+    {
+        using var files = new TestDirectory();
+        var path = Path.Combine(files.Path, "settings.json");
+        File.WriteAllText(path, json);
+        var store = new SettingsStore(path);
+        var loaded = store.Load();
+
+        Assert.Equal(expected, loaded.RunWithQQMusic);
+        Assert.Equal(expected, loaded.Clone().RunWithQQMusic);
+        Assert.True(store.Save(loaded));
+        Assert.Equal(expected, store.Load().RunWithQQMusic);
+    }
+
+    [Theory]
     [InlineData(false, false)]
     [InlineData(true, false)]
     [InlineData(false, true)]
